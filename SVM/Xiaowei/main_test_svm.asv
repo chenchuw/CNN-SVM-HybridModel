@@ -1,0 +1,132 @@
+% This is the test code used for Multi-class SVM
+close all;
+
+
+%% Data initialization/dimension reduction %%
+
+cd('/Users/xiaoweige/Documents/Local Code/EC503-Final-Project/SVM/Xiaowei');
+
+%% Data loading
+Mat_file = 'mnist.mat';
+load(Mat_file);
+
+%% transpose once from original set
+% m = matfile(Mat_file,'Writable',true); % load as handle of .mat
+% m.Xtr = Xtr';
+% m.Xval = Xval';
+% m.Xte = Xte';
+% m.ytr = ytr';
+% m.yval = yval';
+% m.yte = yte';
+
+%% Reshape data trial with 1 sample
+i = randi(size(Xtr,1));
+figure;     % vis a ramdom sample
+imagesc(permute(reshape(Xtr(i,:),28,28), [2 1]));   % permute for display purpose only
+axis(gca,'equal','tight');
+
+Xtr_reshaped = permute(reshape(Xtr(i,:),28,28), [2 1]);
+Xtr_reshaped_LowDim = imresize(full(Xtr_reshaped),1/2.8);
+
+figure;
+imagesc(Xtr_reshaped_LowDim);   
+axis(gca,'equal','tight');
+
+%% reshape all dataset and save once
+% Mat_file = 'mnist_LowDim.mat';
+% m = matfile(Mat_file,'Writable',true); % load as handle of .mat
+% dim_reduce_ratio = 1/2.8;
+% 
+% X = full(Xtr);
+% data_number = size(X,1);
+% X_reshaped = reshape(X,data_number,28,28);
+% X_reshaped_LowDim = imresize(permute(X_reshaped,[2,3,1]),dim_reduce_ratio);
+% X_LowDim = sparse(reshape(permute(X_reshaped_LowDim,[3,1,2]),data_number,10*10));
+% m.Xtr_LowDim = X_LowDim;
+% m.ytr_LowDim = ytr;
+% 
+% X = full(Xval);
+% data_number = size(X,1);
+% X_reshaped = reshape(X,data_number,28,28);
+% X_reshaped_LowDim = imresize(permute(X_reshaped,[2,3,1]),dim_reduce_ratio);
+% X_LowDim = sparse(reshape(permute(X_reshaped_LowDim,[3,1,2]),data_number,10*10));
+% m.Xval_LowDim = X_LowDim;
+% m.yval_LowDim = yval;
+% 
+% X = full(Xte);
+% data_number = size(X,1);
+% X_reshaped = reshape(X,data_number,28,28);
+% X_reshaped_LowDim = imresize(permute(X_reshaped,[2,3,1]),dim_reduce_ratio);
+% X_LowDim = sparse(reshape(permute(X_reshaped_LowDim,[3,1,2]),data_number,10*10));
+% m.Xte_LowDim = X_LowDim;
+% m.yte_LowDim = yte;
+
+
+
+%% Model training with SGD multiclass SVM %%
+clear
+close all
+clc
+
+%% load dataset
+load('mnist_LowDim.mat')
+
+T = 1e5;    % set training total iterations
+% Set delta
+% k = length(unique(ytr));  % not robust
+k = 10;
+Delta = ones(k,k) - eye(k,k);
+
+%% Select lambda using the validation set
+lambda = 10.^[18:0.2:19.2];
+val_error = zeros(length(lambda),1);
+for i = 1:length(lambda)
+    tic 
+    W = train_svm_mhinge_sgd(Xtr_LowDim,ytr_LowDim,Delta,T,lambda(i));
+    toc
+    ypred = test_svm_multi(W, Xval_LowDim);
+    val_error(i) = mean(ypred~=yval_LowDim);
+end
+
+val_error
+figure;
+semilogx(lambda,val_error);
+title('Validation error with different \lambda');
+xlabel('\lambda');
+ylabel('Error');
+
+[~,lambda_opt_index] = min(val_error);
+fprintf('Best lambda is: %.2f\2',lambda(lambda_opt_index));
+
+%% Train with selected lambda on training+validation sets
+
+T = 1e6;    % adjust training iterations if needed
+
+W = train_svm_mhinge_sgd([Xtr_LowDim;Xval_LowDim],[ytr_LowDim;yval_LowDim],Delta,T,lambda(lambda_opt_index));
+
+% Test
+ypred = test_svm_multi(W, Xte_LowDim);
+test_err = mean(ypred~=yte_LowDim);
+fprintf('Test error is %.2e\n',test_err*100);
+
+%% Compute confusion matrix
+ConfMat = zeros(k,k);
+for i = 1:length(yte_LowDim)
+    ConfMat(ypred(i),yte_LowDim(i)) = ConfMat(ypred(i),yte_LowDim(i))+1;
+end
+
+figure;
+% colormap(cmap)
+% set(gca,'XTick',[],'YTick',[],'YDir','normal')
+imagesc(ConfMat);
+[x,y] = meshgrid(1:k,1:k);
+text(x(:),y(:),num2str(ConfMat(:)),'HorizontalAlignment','center','Color','r');
+axis(gca,'equal','tight');
+
+%% Plot default
+
+% set(0, 'DefaultTextFontSize', 18);
+% set(0, 'DefaultLineLineWidth', 2);
+% set(0, 'DefaultAxesLIneWidth', 2);
+% set(0, 'DefaultAxesFontSize', 14);
+% set(0, 'DefaultAxesFontName', 'Arial');

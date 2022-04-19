@@ -71,7 +71,21 @@ axis(gca,'equal','tight');
 % m.Xte_LowDim = X_LowDim;
 % m.yte_LowDim = yte;
 
+%% Random low dimension data generating and save once
 
+% rng('default'); % for reproducibility
+% 
+% rand_feature_idx = randi(28*28,100,1);
+% 
+% Mat_file = 'mnist_LowDim_rand.mat';
+% m = matfile(Mat_file,'Writable',true); % load as handle of .mat
+% 
+% m.Xtr_LowDim = Xtr(:,rand_feature_idx);
+% m.Xval_LowDim = Xval(:,rand_feature_idx);
+% m.Xte_LowDim = Xte(:,rand_feature_idx);
+% m.ytr_LowDim = ytr;
+% m.yte_LowDim = yte;
+% m.yval_LowDim = yval;
 
 %% Model training with SGD multiclass SVM %%
 clear
@@ -79,7 +93,13 @@ close all
 clc
 
 %% load dataset
-load('mnist_LowDim.mat')
+% load('mnist_LowDim.mat')
+
+% Random 100 features test
+% load('mnist_LowDim_rand.mat')
+
+% CNN-SVM connection initial test
+% load('activationPooled2.mat');
 
 T = 1e5;    % set training total iterations
 % Set delta
@@ -87,8 +107,12 @@ T = 1e5;    % set training total iterations
 k = 10;
 Delta = ones(k,k) - eye(k,k);
 
+% Different penalty test
+load('Conf_mat.mat');
+Delta = Delta + Delta.*Conf_mat_LowDim;
+
 %% Select lambda using the validation set
-lambda = 10.^[18:0.2:19.2];
+lambda = 10.^[-5:2:5];
 val_error = zeros(length(lambda),1);
 for i = 1:length(lambda)
     tic 
@@ -133,3 +157,7 @@ imagesc(ConfMat);
 text(x(:),y(:),num2str(ConfMat(:)),'HorizontalAlignment','center','Color','r');
 axis(gca,'equal','tight');
 
+% save confusion mat for different delta once
+Mat_file = 'Conf_mat.mat';
+m = matfile(Mat_file,'Writable',true); % load as handle of .mat
+m.Conf_mat_LowDim = ConfMat;

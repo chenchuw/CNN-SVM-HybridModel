@@ -38,7 +38,7 @@ Xtr_reshaped = permute(reshape(Xtr(i,:),28,28), [2 1]);
 Xtr_reshaped_LowDim = imresize(full(Xtr_reshaped),1/2.8);
 
 pause(0.2);
-figure;
+figure; 
 imagesc(Xtr_reshaped_LowDim);   
 axis(gca,'equal','tight');
 
@@ -93,10 +93,13 @@ close all
 clc
 
 %% load dataset
-load('mnist_LowDim.mat')
+% load('mnist_LowDim.mat')
 
 % Random 100 features test
 % load('mnist_LowDim_rand.mat')
+
+% CNN-SVM connection initial test
+% load('activationPooled2.mat');
 
 T = 1e5;    % set training total iterations
 % Set delta
@@ -106,10 +109,10 @@ Delta = ones(k,k) - eye(k,k);
 
 % Different penalty test
 load('Conf_mat.mat');
-Delta = Delta + Conf_mat_LowDim;
+Delta = Delta + Delta.*Conf_mat_LowDim;
 
 %% Select lambda using the validation set
-lambda = 10.^[1:2:20];
+lambda = 10.^[-5:2:5];
 val_error = zeros(length(lambda),1);
 for i = 1:length(lambda)
     tic 
@@ -155,6 +158,6 @@ text(x(:),y(:),num2str(ConfMat(:)),'HorizontalAlignment','center','Color','r');
 axis(gca,'equal','tight');
 
 % save confusion mat for different delta once
-% Mat_file = 'Conf_mat.mat';
-% m = matfile(Mat_file,'Writable',true); % load as handle of .mat
-% m.Conf_mat_LowDim = ConfMat;
+Mat_file = 'Conf_mat.mat';
+m = matfile(Mat_file,'Writable',true); % load as handle of .mat
+m.Conf_mat_LowDim = ConfMat;

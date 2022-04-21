@@ -11,10 +11,10 @@ close all;
 
 %% Data initialization/dimension reduction %%
 
-cd('/Users/xiaoweige/Documents/Local Code/EC503-Final-Project/SVM/Xiaowei');
+cd('/Users/xiaoweige/Documents/Local Code/EC503-Final-Project/Function/common');
 
 %% Data loading
-Mat_file = 'mnist.mat';
+Mat_file = 'MNIST_raw.mat';
 load(Mat_file);
 
 %% transpose once from original set

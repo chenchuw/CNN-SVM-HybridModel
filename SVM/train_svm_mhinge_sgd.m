@@ -9,10 +9,12 @@ if nargin < 2
     X = Mat.Xval_LowDim;
     y = Mat.yval_LowDim;
     
-    T = 5e4;
+    T = 5e5;
     lambda = 1e-5;
 end
 
+% relabel 0 to 10 for matlab
+y(y == 0) = 10;
 
 % dimension info
 [m,d] = size(X);
@@ -34,6 +36,7 @@ X = X(shuffle_index,:);
 y = y(shuffle_index);
 
 
+
 W = W0;
 
 for i = 1:T
@@ -50,7 +53,7 @@ for i = 1:T
         y = y(shuffle_index);
     end
  
-    L_MH_mat = Delta(:,y(j)) + X(j,:)*(W-W(:,y(j)));
+    L_MH_mat = Delta(:,y(j)) + (W-W(:,y(j)))'*X(j,:)';
     [~, yprime_index] = max(L_MH_mat);
 
     subgradient = lambda*W;

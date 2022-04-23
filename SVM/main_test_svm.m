@@ -2,29 +2,29 @@
 close all;
 % Plot default setting
 
-% set(0, 'DefaultTextFontSize', 18);
-% set(0, 'DefaultLineLineWidth', 2);
-% set(0, 'DefaultAxesLIneWidth', 2);
-% set(0, 'DefaultAxesFontSize', 14);
-% set(0, 'DefaultAxesFontName', 'Arial');
+set(0, 'DefaultTextFontSize', 18);
+set(0, 'DefaultLineLineWidth', 2);
+set(0, 'DefaultAxesLIneWidth', 2);
+set(0, 'DefaultAxesFontSize', 14);
+set(0, 'DefaultAxesFontName', 'Arial');
 
 
 %% Data initialization/dimension reduction %%
 
-cd('/Users/xiaoweige/Documents/Local Code/EC503-Final-Project/Function/common');
+cd('/Users/xiaoweige/Documents/Local Code/EC503-Final-Project/SVM');
 
 %% Data loading
-Mat_file = 'MNIST_raw.mat';
+Mat_file = 'MNIST-70k.mat';
 load(Mat_file);
 
-%% transpose once from original set
-% m = matfile(Mat_file,'Writable',true); % load as handle of .mat
-% m.Xtr = Xtr';
-% m.Xval = Xval';
-% m.Xte = Xte';
-% m.ytr = ytr';
-% m.yval = yval';
-% m.yte = yte';
+% transpose once from original set
+m = matfile(Mat_file,'Writable',true); % load as handle of .mat
+m.Xtr = Xtr';
+m.Xval = Xval';
+m.Xte = Xte';
+m.ytr = ytr';
+m.yval = yval';
+m.yte = yte';
 
 %% Reshape data trial with 1 sample
 close all;
@@ -93,26 +93,51 @@ close all
 clc
 
 %% load dataset
+% Raw data set SVM test
+load('MNIST-70K.mat');
+Xtr_LowDim = imagesTrain';
+ytr_LowDim = labelsTrain;
+[m,d] = size(Xtr_LowDim);
+Xval_LowDim = Xtr_LowDim(1:round(m/6),:);
+yval_LowDim = ytr_LowDim(1:round(m/6),:);
+Xtr_LowDim = Xtr_LowDim((round(m/6)+1):end,:);
+ytr_LowDim = ytr_LowDim((round(m/6)+1):end,:);
+Xte_LowDim = imagesTest';
+yte_LowDim = labelsTest;
+
+
 % load('mnist_LowDim.mat')
 
 % Random 100 features test
 % load('mnist_LowDim_rand.mat')
 
-% CNN-SVM connection initial test
-% load('activationPooled2.mat');
+% % CNN-SVM connection initial test
+% load('CNN_features.mat');
+% Xtr_LowDim = CNN_features_train;
+% ytr_LowDim = trainLabels;
+% [m,d] = size(Xtr_LowDim);
+% Xval_LowDim = Xtr_LowDim(1:round(m/6),:);
+% yval_LowDim = ytr_LowDim(1:round(m/6),:);
+% Xtr_LowDim = Xtr_LowDim((round(m/6)+1):end,:);
+% ytr_LowDim = ytr_LowDim((round(m/6)+1):end,:);
+% Xte_LowDim = CNN_features_test;
+% yte_LowDim = testLabels;
 
-T = 1e5;    % set training total iterations
+
 % Set delta
 % k = length(unique(ytr));  % not robust
 k = 10;
 Delta = ones(k,k) - eye(k,k);
 
-% Different penalty test
-load('Conf_mat.mat');
-Delta = Delta + Delta.*Conf_mat_LowDim;
+% % Different penalty test
+% load('Conf_mat.mat');
+% Delta = Delta + Delta.*Conf_mat_LowDim;
+
 
 %% Select lambda using the validation set
-lambda = 10.^[-5:2:5];
+T = 1e5;    % set training total iterations
+
+lambda = 10.^[-3:2:10];
 val_error = zeros(length(lambda),1);
 for i = 1:length(lambda)
     tic 
@@ -134,14 +159,18 @@ fprintf('Best lambda is: %.2e\n',lambda(lambda_opt_index));
 
 %% Train with selected lambda on training+validation sets
 
-T = 1e6;    % adjust training iterations if needed
+T = 1e7;    % adjust training iterations if needed
 
-W = train_svm_mhinge_sgd([Xtr_LowDim;Xval_LowDim],[ytr_LowDim;yval_LowDim],Delta,T,lambda(lambda_opt_index));
+lambda_opt = lambda(lambda_opt_index);
+% lambda_opt = 1e-3;
+tic
+W = train_svm_mhinge_sgd([Xtr_LowDim;Xval_LowDim],[ytr_LowDim;yval_LowDim],Delta,T,lambda_opt);
+toc
 
 % Test
 ypred = test_svm_multi(W, Xte_LowDim);
-test_err = mean(ypred~=yte_LowDim);
-fprintf('Test error is %.2f%%\n',test_err*100);
+test_accuracy = mean(ypred==yte_LowDim);
+fprintf('Test accuracy is %.2f%%\n',test_accuracy*100);
 
 %% Compute confusion matrix
 ConfMat = zeros(k,k);

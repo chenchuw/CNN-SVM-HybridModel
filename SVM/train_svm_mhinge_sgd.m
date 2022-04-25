@@ -1,4 +1,4 @@
-function W = train_svm_mhinge_sgd(X,y,Delta,T,lambda)
+function W = train_svm_mhinge_sgd(X,y,Delta,T,lambda,k)
 %
 if nargin < 2
     Mat_file = 'mnist_LowDim.mat';
@@ -19,7 +19,7 @@ y(y == 0) = 10;
 % dimension info
 [m,d] = size(X);
 % k = length(unique(y));    % not robust ;(
-k = 10;
+% k = 10;
 
 if nargin < 3
     Delta = ones(k,k) - eye(k,k);

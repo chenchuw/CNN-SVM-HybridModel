@@ -67,12 +67,22 @@ T_label = [ones(size(T_BP,1),1); ones(size(T_BT,1),1)*2; ones(size(T_CS,1),1)*3]
 T_set = [T_BP;T_BT;T_CS];
 
 rng('default');
-rand_indices = randperm(size(T_set,1));
+sample_number = size(T_set,1);
+rand_indices = randperm(sample_number);
+Test_indices = rand_indices(1:round(sample_number/7));
+Train_indices = rand_indices((round(sample_number/7)+1):end);
 
-imagesTrain = T_set((round(rand_indices/7)+1):end,:);
-imagesTest = T_set(1:round(rand_indices/7),:);
-labelsTrain = T_label((round(rand_indices/7)+1):end,:);
-labelsTest = 
+imagesTrain = T_set(Train_indices,:);
+imagesTest = T_set(Test_indices,:);
+labelsTrain = T_label(Train_indices,:);
+labelsTest = T_label(Test_indices,:);
 
+Mat_file = 'CellSet.mat';
+m = matfile(Mat_file,'Writable',true); 
+% load as handle of .mat
+m.imagesTrain = imagesTrain;
+m.imagesTest = imagesTest;
+m.labelsTrain = labelsTrain;
+m.labelsTest = labelsTest;
 
 

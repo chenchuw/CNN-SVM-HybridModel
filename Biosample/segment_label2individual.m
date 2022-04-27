@@ -40,7 +40,7 @@ for i = 1:cell_number
     K_pad = padarray(K_pad, [ceil((img_resize-a)/2) ceil((img_resize-b)/2)], 0,'pre');
     
     TableName = append(filepath_save,'FOV',num2str(FOV),'_Cell',num2str(i),'.csv');
-    writematrix(K_pad,TableName);
+%     writematrix(K_pad,TableName);
     
     
 %     imshow(K_pad);

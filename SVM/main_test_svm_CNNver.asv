@@ -249,7 +249,7 @@ fprintf('Best lambda is: %.2e\n',lambda(lambda_opt_index));
 T_SVM = 1e6;    % adjust training iterations if needed
 
 lambda_opt = lambda(lambda_opt_index);
-lambda_opt = 1e-2;
+% lambda_opt = 1e-3;
 tic
 % W = train_svm_mhinge_sgd([Xtr_LowDim;Xval_LowDim],[ytr_LowDim;yval_LowDim],Delta,T_SVM,lambda_opt,k);
 W = train_svm_mhinge_sgd_mini([Xtr_LowDim;Xval_LowDim],[ytr_LowDim;yval_LowDim],Delta,T_SVM,lambda_opt,k,m_mini);

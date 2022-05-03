@@ -29,3 +29,6 @@ Available: https://www.liebertpub.com/doi/pdfplus/10.1089/big.2018.0175
 
 [8] Li, Chao, et al. "Using the K-nearest neighbor algorithm for the classification of lymph node metastasis in gastric cancer." Computational and mathematical methods in medicine 2012 (2012).
 Available: https://downloads.hindawi.com/journals/cmmm/2012/876545.pdf
+
+[9] Xuzhenqi, “Xuzhenqi/CNN: This is a Matlab-code implementation of Convolutional Neural Network,” GitHub. [Online]. 
+Available: https://github.com/xuzhenqi/cnn. [Accessed: 03-May-2022]. 

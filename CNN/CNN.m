@@ -5,29 +5,29 @@ close all;
 tic 
 
 epochs = 3;
-minibatch = 150;
+minibatch = 64;
 
-imageDim = 28;
-numClasses = 10;  % MNIST images has 10 classes
-filterDim1 = 5;    % Filter size for conv layer
-filterDim2 = 5;
-imageChannel = 1;
-numFilters1 = 10;
-numFilters2 = 10;
-poolDim1 = 2;
-poolDim2 = 2;
+imagedimension = 40;
+numClasses = 3;  % Cell images has 3 classes
+kerneldim1 = 5;    % Filter size for conv layer
+kerneldim2 = 7;
+Channel = 1;
+numFilters1 = 20;
+numFilters2 = 16;
+poolbatch1 = 2;
+poolbatch2 = 4;
 
 % Weight decay
 lambda = 0.0001;
 
-Wc1 = 1e-1*randn(filterDim1,filterDim1,imageChannel,numFilters1);
-Wc2 = 1e-1*randn(filterDim2,filterDim2,numFilters1,numFilters2);
+Wc1 = 1e-1*randn(kerneldim1,kerneldim1,Channel,numFilters1);
+Wc2 = 1e-1*randn(kerneldim2,kerneldim2,numFilters1,numFilters2);
 
-outDim1 = imageDim-filterDim1+1; % dimension of convolved image
-outDim1 = outDim1/poolDim1;
-outDim2 = outDim1-filterDim2+1; % dimension of convolved image
-outDim2 = outDim2/poolDim2;
-hiddenSize = outDim2^2*numFilters2;
+outDim1 = imagedimension - kerneldim1 + 1; % dimension of convolved image
+outDim1 = outDim1 / poolbatch1;
+outDim2 = outDim1 - kerneldim2 + 1; % dimension of convolved image
+outDim2 = outDim2 / poolbatch2;
+hiddenSize = outDim2^2 * numFilters2;
 
 r  = sqrt(6)/sqrt(numClasses+hiddenSize+1);
 Wd = rand(numClasses, hiddenSize)*2*r-r;
@@ -48,12 +48,12 @@ bc2_velocity = zeros(size(bc2));
 Wd_velocity = zeros(size(Wd));
 bd_velocity = zeros(size(bd));
 
-%% Load MNIST Train and initialization
-load MNIST-70k.mat;
-
-% Reshape each image to 28*28 matrix
-imagesTrain = reshape(imagesTrain,imageDim,imageDim,1,[]);
-imagesTest = reshape(imagesTest,imageDim,imageDim,1,[]);
+%% Load trainging data and initialization
+%load MNIST-70k.mat;
+load CellSet_raw_1600.mat;
+% Reshape each image to 40*40 matrix
+imagesTrain = reshape(imagesTrain,imagedimension,imagedimension,1,[]);
+imagesTest = reshape(imagesTest,imagedimension,imagedimension,1,[]);
 
 % Relabel label 0 to 10
 labelsTrain(labelsTrain==0) = 10;
@@ -86,16 +86,16 @@ for e = 1:epochs
         Wc2_grad = zeros(size(Wc2));
         Wc1_grad = zeros(size(Wc1));
         
-        convDim1 = imageDim-filterDim1+1;
-        outputDim1 = (convDim1)/poolDim1;
-        convDim2 = outputDim1-filterDim2+1;
-        outputDim2 = (convDim2)/poolDim2;
+        convDim1 = imagedimension-kerneldim1+1;
+        outputDim1 = (convDim1)/poolbatch1;
+        convDim2 = outputDim1-kerneldim2+1;
+        outputDim2 = (convDim2)/poolbatch2;
         
         %% --------- Feedforward Pass ---------
-        activations1 = cnnConvolve4D(mb_images, Wc1, bc1);
-        activationsPooled1 = CnnPooling(poolDim1, activations1);
-        activations2 = cnnConvolve4D(activationsPooled1, Wc2, bc2);
-        activationsPooled2 = CnnPooling(poolDim2, activations2);
+        activations1 = Convlayer(mb_images, Wc1, bc1);
+        activationsPooled1 = Poolinglayer(poolbatch1, activations1);
+        activations2 = Convlayer(activationsPooled1, Wc2, bc2);
+        activationsPooled2 = Poolinglayer(poolbatch2, activations2);
 
         % Reshape activations into 2-d matrix, hiddenSize x numImages,
         % for Softmax layer
@@ -110,11 +110,11 @@ for e = 1:epochs
         %% --------- Backpropagation ----------
         % Compute Error of each layer
         [DeltaSoftmax,DeltaConv2,DeltaConv1] = BackPropError(probs,index,Wd,outputDim2,numFilters2,numImages,convDim2, ...
-            poolDim2,activations2,outputDim1,numFilters1,Wc2,convDim1,poolDim1,activations1);
+            poolbatch2,activations2,outputDim1,numFilters1,Wc2,convDim1,poolbatch1,activations1);
 
         % Compute Gradient of each layer
         [Wd_grad,bd_grad,Wc2_grad,bc2_grad,Wc1_grad,bc1_grad] = BackPropGrad(DeltaSoftmax,activationsPooled2, ...
-            activationsPooled1,Wc2_grad,Wc1_grad,numFilters2,numFilters1,imageChannel,numImages,DeltaConv2,DeltaConv1,mb_images);
+            activationsPooled1,Wc2_grad,Wc1_grad,numFilters2,numFilters1,Channel,numImages,DeltaConv2,DeltaConv1,mb_images);
         
         % Update gradients with momentum (W->W',b->b')
         [Wd,bd,Wc2,bc2,Wc1,bc1,Wd_velocity,bd_velocity,Wc2_velocity,bc2_velocity,Wc1_velocity,bc1_velocity] = GradUpdate( ...
@@ -123,7 +123,7 @@ for e = 1:epochs
             Wd,bd,Wc2,bc2,Wc1,bc1);
         
         %% Report cost on each iteration and maintain it
-        fprintf('Epoch %d: Cost on iteration %d is %f\n',e,it,cost);
+        %fprintf('Epoch %d: Cost on iteration %d is %f\n',e,it,cost);
         C(length(C)+1) = cost;
 
     end
@@ -134,18 +134,18 @@ end
 
 %% Get features of train set using trained CNN model
 activations1 = cnnConvolve4D(imagesTrain, Wc1, bc1);
-activationsPooled1_train = CnnPooling(poolDim1, activations1);
+activationsPooled1_train = CnnPooling(poolbatch1, activations1);
 activations2 = cnnConvolve4D(activationsPooled1_train, Wc2, bc2);
-activationsPooled2_train = CnnPooling(poolDim2, activations2);
+activationsPooled2_train = CnnPooling(poolbatch2, activations2);
 
 % Reshape features into 2d matrix (hiddenSize x numImages)
 CNN_features_train = reshape(activationsPooled2_train,[],length(imagesTrain));
 
 %% Get features of test set using trained CNN model
 activations1 = cnnConvolve4D(imagesTest, Wc1, bc1);
-activationsPooled1_test = CnnPooling(poolDim1, activations1);
+activationsPooled1_test = CnnPooling(poolbatch1, activations1);
 activations2 = cnnConvolve4D(activationsPooled1_test, Wc2, bc2);
-activationsPooled2_test = CnnPooling(poolDim2, activations2);
+activationsPooled2_test = CnnPooling(poolbatch2, activations2);
 
 % Reshape features into 2d matrix (hiddenSize x numImages)
 CNN_features_test = reshape(activationsPooled2_test,[],length(imagesTest));

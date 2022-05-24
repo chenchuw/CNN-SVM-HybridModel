@@ -16,3 +16,4 @@ classical MNIST data set. And for application, we demonstrated the advanced
 accuracy of our model on biological samples to fill the need of precise image-based
 methods for cell identification.
 
+**Citation info**: Sunshineatnoon. (n.d.). Sunshineatnoon/two-layer-CNN-on-mnist. GitHub. Retrieved Apr 24, 2022, from https://github.com/sunshineatnoon/Two-Layer-CNN-on-MNIST.git 
